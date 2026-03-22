@@ -16,7 +16,18 @@ class Fabrica:
         pass
     def produirVehicle(self, model: ModelVehicle, color: str, data: Date) -> VehicleProduit:
         pass
+    def afegirLineaProduccio(self, linea_produccio: LineaProduccioVehicle) -> bool:
+        if (linea_produccio not in self._linea_produccio):
+            self._linea_produccio.append(linea_produccio)
+            return True
+        else:
+            raise Exception("Error: linea de produccio ja està a la llista.")
 
 
+class LineaProduccioVehicle:
+    def __init__(self, id_linea: str):
+        self._id_linea = id_linea
+    def produirVehicle(model: ModelVehicle) -> VehicleProduit:
+        pass
 
 # === Main ===
