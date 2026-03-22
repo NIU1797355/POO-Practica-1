@@ -7,7 +7,7 @@ from datetime import datetime
 class Fabrica:
     def __init__(self, nom):
         self._nom = nom
-        self._lines_produccio = None
+        self._lines_produccio = []
         self._inventari = None
         self._registre = None
     def afegirModelCotxe(self, nom: str, es_electric: bool, cilindrada: int, num_portes: int, tipus_canvi: str, tipus_combustible: str) -> bool:
