@@ -2,7 +2,7 @@ import logging
 import math
 from datetime import datetime
 
-# === Fabrica ===
+# === Fabrica ====
 
 class Fabrica:
     def __init__(self, nom):
