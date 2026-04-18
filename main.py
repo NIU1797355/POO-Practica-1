@@ -31,10 +31,10 @@ class ModelVehicle(ABC) :
                 raise ValueError("La cilindrada ha de ser un nombre major a 0 \n")
      
     @abstractmethod        
-    def numeroDeRodes(self, nombre:int) :
+    def numeroDeRodes(self) :
             pass
     @abstractmethod
-    def etiquetaDeContaminacio(self,etiqueta:str):
+    def etiquetaDeContaminacio(self):
         pass
     @abstractmethod
     def pecesNecesaries(self, pecesll: list()):
@@ -57,7 +57,8 @@ class ModelCotxe(ModelVehicle) :
             return "B"
         else :
             return "Sense etiqueta"
-    
+    def pecesNecesaries(self) :
+        return 
     @property
     def numeroDePortes(self):
         """The numeroDePortes property."""
