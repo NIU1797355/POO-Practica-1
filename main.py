@@ -1,25 +1,72 @@
 import logging
 import math
 from datetime import datetime 
-from abc, import ABC, abstractmethod
+from abc import ABC, abstractmethod
+from __future__ import annotations
 
 # === Fabrica ==========
 
 class Fabrica:
     def __init__(self, marca: str):
         self._marca = marca
-        self._lineaProduccio = []
+        self._lineesProduccio = []
         self._inventariPeces = None
         self._registreProduccio = None
+        self._models = []
+        self._subministradors = []
+
+        self._comptador_series = 1
+        self._index_linea_actual = 0
+
+    def assignarInventari(self, inventari: InventariPeces):
+        self._inventariPeces = inventari
+
+    def assignarRegistre(self, registre: RegistreProduccio):
+        self._registreProduccio = registre
     def afegirModelCotxe(self, nom: str, es_electric: bool, cilindrada: int, numPortes: int, tipusCanvi: str, tipusCombustible: str) -> bool:
-        pass
+        try:
+            nou_cotxe = ModelCotxe(nom, es_electric, cilindrada, numPortes, tipusCanvi, tipusCombustible)
+            self._models.append(nou_cotxe)
+            return True
+        except Exception as e:
+            logging.error(f"Error en afegir model cotxe: {e}")
+            return False
     def afegirModelMoto(self, nom: str, es_electric: bool, cilindrada: int, tipus_rodes: str, carnet_necessari: str) -> bool:
-        pass
-    def produirVehicle(self, model: ModelVehicle, color: str, data: Date) -> VehicleProduit:
-        pass
+        try:
+            nova_moto = ModelMoto(nom, es_electric, cilindrada, tipus_rodes, carnet_necessari)
+            self._models.append(nova_moto)
+            return True
+        except Exception as e:
+            logging.error(f"Error en afegir model moto: {e}")
+            return False
+    def produirVehicle(self, model: ModelVehicle, color: str, data: datetime) -> VehicleProduit:
+        if not self._lineesProduccio:
+            raise Exception("No hi ha línies de producció assignades a la fàbrica.")
+        if self._inventariPeces is None:
+            raise Exception("No hi ha inventari assignat.")
+        try:
+            self._inventariPeces.consumir_peces(model)
+        except Exception as e:
+            print(f"Error de producció: Falten peces - {e}")
+            return None
+
+        linea = self._lineesProduccio[self._index_linea_actual]
+        self._index_linea_actual = (self._index_linea_actual + 1) % len(self._lineesProduccio)
+        
+        vehicle = linea.produirVehicle(model)
+
+        vehicle._numeroSerie = f"SN-{self._comptador_series:05d}"
+        self._comptador_series += 1
+        vehicle._color = color
+        vehicle._dataProduccio = data
+
+        if self._registreProduccio is not None:
+            self._registreProduccio.registrarVehicle(vehicle)
+
+        return vehicle
     def afegirLineaProduccio(self, linea_produccio: LineaProduccioVehicle) -> bool:
-        if (linea_produccio not in self._linea_produccio):
-            self._linea_produccio.append(linea_produccio)
+        if (linea_produccio not in self._lineesProduccio):
+            self._lineesProduccio.append(linea_produccio)
             return True
         else:
             raise Exception("Error: linea de produccio ja està a la llista.")
@@ -30,6 +77,7 @@ class ModelVehicle(ABC) :
     def __init__(self, nomModel: str, electric: bool, cilindrada:int):
             self._nomModel = nomModel
             self._electric = electric
+            self._requisits_peces = []
             if cilindrada > 0 :
                 self._cilindrada = cilindrada
             else :
@@ -37,26 +85,40 @@ class ModelVehicle(ABC) :
      
     @abstractmethod        
     def numeroDeRodes(self) :
-            pass
+        pass
     @abstractmethod
     def etiquetaDeContaminacio(self):
         pass
-    @abstractmethod
-    def pecesNecesaries(self, pecesll: list()):
-        pass
+    def afegirRequisitPeca(self, requisit: RequisitPeca):
+        self._requisits_peces.append(requisit)
+    def pecesNecesaries(self) -> list:
+        return self._requisits_peces
 
 class LineaProduccioVehicle:
     def __init__(self, id_linea: str):
         self._id_linea = id_linea
-    def produirVehicle(model: ModelVehicle) -> VehicleProduit:
-        pass
+    def produirVehicle(self, model: ModelVehicle) -> VehicleProduit:
+        return VehicleProduit(numeroSerie="", color="", dataProduccio=None, model=model)
 
 class RegistreProduccio:
-    def __init__(self, dataIniciRegistre: Date):
-        self._dataIniciRegistre = dataIniciRegistre 
-    def nVehiclesProduits(model: Model, dataInici: Date, dataFi: Date) -> int:
-        pass
+    def __init__(self, dataIniciRegistre: datetime):
+        self._dataIniciRegistre = dataIniciRegistre
+        self._vehicles_registrats = []
+    def registrarVehicle(self, vehicle: VehicleProduit):
+        self._vehicles_registrats.append(vehicle)
+    def nVehiclesProduits(self, model: ModelVehicle, dataInici: datetime, dataFi: datetime) -> int:
+        comptador = 0
+        for vehicle in self._vehicles_registrats:
+            if vehicle._model == model and (dataInici <= vehicle._dataProduccio <= dataFi):
+                comptador += 1
+        return comptador
 
+class VehicleProduit:
+    def __init__(self, numeroSerie: str, color: str, dataProduccio: datetime, model: ModelVehicle):
+        self._numeroSerie = numeroSerie
+        self._color = color
+        self._dataProduccio = dataProduccio
+        self._model = model
 
 class ModelCotxe(ModelVehicle) :
     def __init__(self,nomModel:str, electric:bool, cilindrada:int,portes:int,canvi:str,combustible:str):
@@ -66,8 +128,8 @@ class ModelCotxe(ModelVehicle) :
         self.tipusCombustible = combustible
     def numeroDeRodes(self):
         return 4
-    def etiquetaDeContaminacio(self,etiqueta:str):
-        if self.electric :
+    def etiquetaDeContaminacio(self):
+        if self._electric :
             return "0 Emisions"
         elif self.tipusCombustible.lower() == "gasolina":
             return "C"
@@ -75,8 +137,6 @@ class ModelCotxe(ModelVehicle) :
             return "B"
         else :
             return "Sense etiqueta"
-    def pecesNecesaries(self) :
-        return 
     @property
     def numeroDePortes(self):
         """The numeroDePortes property."""
@@ -86,7 +146,7 @@ class ModelCotxe(ModelVehicle) :
         if value >=2 :
             self._numeroDePortes = value
         else :
-            print("El numero de portes ha de ser com a mínim 2.")
+            raise ValueError("El número de portes ha de ser com a mínim 2.")
     @property 
     def tipusCanviMarxes(self) :
         return self._tipusCanviMarxes
@@ -109,7 +169,7 @@ class ModelMoto(ModelVehicle):
     def numeroDeRodes(self):
         return 2
     def etiquetaDeContaminacio(self):
-        if self.electric :
+        if self._electric :
             return "0 Emisions"
         else :
             return "C"
@@ -127,7 +187,6 @@ class ModelMoto(ModelVehicle):
     @carnetNecessari.setter
     def carnetNecessari(self,value:str):
         self._carnetNecessari = value
-
 
 
 # EXERCICI 1: DEFINICIÓ DE CLASSES
@@ -156,7 +215,7 @@ class Peca:
     def get_subministrador(self): return self._subministrador
 
 class RequisitPeca:
-  def __init__(self, peca, quantitat, opcional=False, posicio=0):
+    def __init__(self, peca, quantitat, opcional=False, posicio=0):
         self._peca = peca
         self._quantitat = quantitat
         self._opcional = opcional
@@ -190,6 +249,13 @@ class InventariPeces:
         return peces_prov
 
     def consumir_peces(self, model):
-        """Mètode auxiliar per actualitzar inventari a l'hora de produir."""
         for req in model.pecesNecesaries():
-            self._estoc[req.get_peca().get_codi()]['quantitat'] -= req.get_quantitat()
+            codi = req.get_peca().get_codi()
+            quantitat_necessaria = req.get_quantitat()
+            
+            if codi not in self._estoc or self._estoc[codi]['quantitat'] < quantitat_necessaria:
+                raise Exception(f"Estoc insuficient per la peça: {codi}")
+                
+        for req in model.pecesNecesaries():
+            codi = req.get_peca().get_codi()
+            self._estoc[codi]['quantitat'] -= req.get_quantitat()
