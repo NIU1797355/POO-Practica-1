@@ -5,12 +5,12 @@ from datetime import datetime
 # === Fabrica ===
 
 class Fabrica:
-    def __init__(self, nom):
-        self._nom = nom
-        self._lines_produccio = []
-        self._inventari = None
-        self._registre = None
-    def afegirModelCotxe(self, nom: str, es_electric: bool, cilindrada: int, num_portes: int, tipus_canvi: str, tipus_combustible: str) -> bool:
+    def __init__(self, marca: str):
+        self._marca = marca
+        self._lineaProduccio = []
+        self._inventariPeces = None
+        self._registreProduccio = None
+    def afegirModelCotxe(self, nom: str, es_electric: bool, cilindrada: int, numPortes: int, tipusCanvi: str, tipusCombustible: str) -> bool:
         pass
     def afegirModelMoto(self, nom: str, es_electric: bool, cilindrada: int, tipus_rodes: str, carnet_necessari: str) -> bool:
         pass
@@ -29,5 +29,12 @@ class LineaProduccioVehicle:
         self._id_linea = id_linea
     def produirVehicle(model: ModelVehicle) -> VehicleProduit:
         pass
+
+class RegistreProduccio:
+    def __init__(self, dataIniciRegistre: Date):
+        self._dataIniciRegistre = dataIniciRegistre 
+    def nVehiclesProduits(model: Model, dataInici: Date, dataFi: Date) -> int:
+        pass
+
 
 # === Main ===
