@@ -1,10 +1,12 @@
+from __future__ import annotations
 import logging
 import math
 from datetime import datetime 
 from abc import ABC, abstractmethod
-from __future__ import annotations
+import tkinter as tk
+from tkinter import ttk
 
-# === Fabrica ==========
+# === Fabrica ===
 
 class Fabrica:
     def __init__(self, marca: str):
@@ -71,8 +73,6 @@ class Fabrica:
         else:
             raise Exception("Error: linea de produccio ja està a la llista.")
 
-
-# === Main ====
 class ModelVehicle(ABC) :
     def __init__(self, nomModel: str, electric: bool, cilindrada:int):
             self._nomModel = nomModel
@@ -291,3 +291,25 @@ class InventariPeces:
         for req in model.pecesNecesaries():
             codi = req.get_peca().get_codi()
             self._estoc[codi]['quantitat'] -= req.get_quantitat()
+
+# === Main ===
+
+root = tk.Tk()
+root.title("Factory App")
+root.geometry("1280x720")
+style = ttk.Style()
+style.configure("MiBoton.TButton", 
+                foreground="white", 
+                background="red", 
+                font=("Arial", 12, "bold"))
+
+label = ttk.Label(root, text="Hi", font=("Arial", 14))
+label.pack(pady=20)
+
+btn_tk = tk.Button(root, text="Clásico", bg="red", fg="white")
+btn_tk.pack(pady=5)
+
+btn_ttk = ttk.Button(root, text="Moderno", style="MiBoton.TButton") 
+btn_ttk.pack(pady=5)
+
+root.mainloop()
