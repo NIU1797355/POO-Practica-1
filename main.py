@@ -77,11 +77,12 @@ class ModelVehicle(ABC) :
     def __init__(self, nomModel: str, electric: bool, cilindrada:int):
             self._nomModel = nomModel
             self._electric = electric
-            self._requisits_peces = []
+            self._requisits_peces = dict()
             if cilindrada > 0 :
                 self._cilindrada = cilindrada
             else :
-                raise ValueError("La cilindrada ha de ser un nombre major a 0 \n")
+                logging.error("La cilindrada ha de ser un nombre major a 0.\n")
+                raise ValueError("La cilindrada ha de ser un nombre major a 0.\n")
      
     @abstractmethod        
     def numeroDeRodes(self) :
@@ -90,8 +91,13 @@ class ModelVehicle(ABC) :
     def etiquetaDeContaminacio(self):
         pass
     def afegirRequisitPeca(self, requisit: RequisitPeca):
-        self._requisits_peces.append(requisit)
-    def pecesNecesaries(self) -> list:
+        if requisit in self._requisits_peces :
+            self._requisits_peces[requisit] += 1
+        else :
+            self._requisits_peces[requisit] = 1
+    
+    @property
+    def requisits_peces(self) -> dict:
         return self._requisits_peces
 
 class LineaProduccioVehicle:
@@ -112,6 +118,14 @@ class RegistreProduccio:
             if vehicle._model == model and (dataInici <= vehicle._dataProduccio <= dataFi):
                 comptador += 1
         return comptador
+
+    @property
+    def vehicles_registrats(self):
+        return self._vehicles_registrats
+
+    @property 
+    def dataIniciRegistre(self):
+        return self._dataInciRegistre
 
 class VehicleProduit:
     def __init__(self, numeroSerie: str, color: str, dataProduccio: datetime, model: ModelVehicle):
@@ -137,16 +151,17 @@ class ModelCotxe(ModelVehicle) :
             return "B"
         else :
             return "Sense etiqueta"
+    
     @property
     def numeroDePortes(self):
-        """The numeroDePortes property."""
         return self._numeroDePortes
     @numeroDePortes.setter
     def numeroDePortes(self, value):
         if value >=2 :
             self._numeroDePortes = value
         else :
-            raise ValueError("El número de portes ha de ser com a mínim 2.")
+            logging.error("El nombre de portes ha de ser com a mínim 2.\n")
+            raise ValueError("El número de portes ha de ser com a mínim 2.\n")
     @property 
     def tipusCanviMarxes(self) :
         return self._tipusCanviMarxes
@@ -198,21 +213,28 @@ class Subministrador:
         self._adreca = adreca
         self._pais = pais
 
-    def get_nom(self): return self._nom
-    def get_cif(self): return self._cif
-    def get_adreca(self): return self._adreca
-    def get_pais(self): return self._pais
+    @property
+    def nom(self): return self._nom
+    @property
+    def cif(self): return self._cif
+    @property
+    def adreca(self): return self._adreca
+    @property
+    def pais(self): return self._pais
 
 class Peca:
-    def __init__(self, codi, nom, descripcio, subministrador):
+    def __init__(self, codi, nom, descripcio, subministrador: Subministrador):
         self._codi = codi
         self._nom = nom
         self._descripcio = descripcio
         self._subministrador = subministrador
 
-    def get_codi(self): return self._codi
-    def get_nom(self): return self._nom
-    def get_subministrador(self): return self._subministrador
+    @property
+    def codi(self): return self._codi
+    @property
+    def nom(self): return self._nom
+    @property
+    def subministrador(self): return self._subministrador
 
 class RequisitPeca:
     def __init__(self, peca, quantitat, opcional=False, posicio=0):
