@@ -294,6 +294,9 @@ class InventariPeces:
 
 # === Main ===
 
+class Vista:
+    def __init__(self, controller):
+        pass
 root = tk.Tk()
 root.title("Factory App")
 root.geometry("1280x720")
