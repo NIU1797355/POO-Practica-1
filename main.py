@@ -214,13 +214,17 @@ class Subministrador:
         self._pais = pais
 
     @property
-    def nom(self): return self._nom
+    def nom(self):
+        return self._nom
     @property
-    def cif(self): return self._cif
+    def cif(self):
+        return self._cif
     @property
-    def adreca(self): return self._adreca
+    def adreca(self):
+        return self._adreca
     @property
-    def pais(self): return self._pais
+    def pais(self):
+        return self._pais
 
 class Peca:
     def __init__(self, codi, nom, descripcio, subministrador: Subministrador):
@@ -242,9 +246,12 @@ class RequisitPeca:
         self._quantitat = quantitat
         self._opcional = opcional
         self._posicio = posicio
-
-    def get_peca(self): return self._peca
-    def get_quantitat(self): return self._quantitat
+    @property
+    def peca(self):
+        return self._peca
+    @property
+    def quantitat(self):
+        return self._quantitat
 
 class InventariPeces:
     def __init__(self, data_ultima_revisio):
