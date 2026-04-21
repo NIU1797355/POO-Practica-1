@@ -234,11 +234,14 @@ class Peca:
         self._subministrador = subministrador
 
     @property
-    def codi(self): return self._codi
+    def codi(self):
+        return self._codi
     @property
-    def nom(self): return self._nom
+    def nom(self):
+        return self._nom
     @property
-    def subministrador(self): return self._subministrador
+    def subministrador(self):
+        return self._subministrador
 
 class RequisitPeca:
     def __init__(self, peca, quantitat, opcional=False, posicio=0):
