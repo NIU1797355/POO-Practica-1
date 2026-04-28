@@ -231,9 +231,6 @@ class ModelMoto(ModelVehicle):
     def carnetNecessari(self,value:str):
         self._carnetNecessari = value
 
-
-# EXERCICI 1: DEFINICIÓ DE CLASSES
-
 class Subministrador:
     def __init__(self, nom, cif, adreca, pais):
         self._nom = nom
