@@ -92,7 +92,7 @@ class ModelVehicle(ABC) :
             self._nomModel = nomModel
             self._electric = electric
             self._requisits_peces = dict()
-            if cilindrada > 0 :
+            if cilindrada >= 0 :
                 self._cilindrada = cilindrada
             else :
                 logging.error("La cilindrada ha de ser un nombre major a 0.\n")
