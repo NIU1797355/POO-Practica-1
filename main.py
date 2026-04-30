@@ -365,7 +365,7 @@ class ViewCreaModel:
         self.crear_interficie()
 
     def crear_interficie(self):
-        # Tipus de vehicle (Radiobuttons)
+        # Tipus de vehicle
         tk.Label(self.root, text="Tipus de Vehicle:").pack(pady=5)
         frame_radios = tk.Frame(self.root)
         frame_radios.pack()
