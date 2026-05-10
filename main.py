@@ -299,10 +299,10 @@ class InventariPeces:
         return -1 #NO EXISTE IMBECIL
 
     def pecesProveidor(self, cif_proveidor):
-        peces_prov = []
+        peces_prov = {}
         for dades in self._estoc.values():
             if dades['peca'].subministrador.cif == cif_proveidor:
-                peces_prov.append(dades['peca'])
+                peces_prov[dades['peca']] = dades['quantitat']
         return peces_prov
 
     def consumir_peces(self, model):
@@ -555,14 +555,14 @@ class ViewProduir:
     def run(self):
         self.root.mainloop()
 
-class ControllerPecesDisponible:
+class ControllerPecesDisponible_C:
     def __init__(self, fabrica: Fabrica):
         self.fabrica = fabrica
     def consultar(self, codi: str) -> int:
         return self.fabrica._inventariPeces.numExistenciesPeca(codi)
 
-class ViewPecesDisponible:
-    def __init__(self, controller: ControllerPecesDisponible):
+class ViewPecesDisponible_C:
+    def __init__(self, controller: ControllerPecesDisponible_C):
         self.controller = controller
         self.root = tk.Tk()
         self.root.title("Disponibilitat de Peçes")
@@ -590,8 +590,40 @@ class ViewPecesDisponible:
 
     def run(self):
         self.root.mainloop()
+class ControllerPecesDisponible_D :
+    def __init__(self,fabrica) :
+        self.fabrica = fabrica
+    def consultar(self, codi:str) -> dict:
+        return self.fabrica._inventariPeces.pecesProveidor(codi)
+class ViewPecesDisponible_D :
+    def __init__(self, controller:ControllerPecesDisponible_D) :
+        self.controller = controller
+        self.root = tk.Tk()
+        self.root.title("Peces del proveidor")
+        self.root.geometry("400x450")
 
-# ==========================================
+        self.codi_var = tk.StringVar()
+        self.crear_interficie()
+        self.tree = ttk.Treeview(self.root, columns=("cod","nom","quant"), show="headings")
+        self.tree.heading("cod", text="Codi Proveidor")
+        self.tree.heading("nom", text = "Peça")
+        self.tree.heading("quant", text = "Quantitat")
+        self.tree.pack()
+    def crear_interficie(self) :
+        tk.Label(self.root, text="Introdueix un codi de proveidor: ").pack(pady=5)
+        tk.Entry(self.root, textvariable=self.codi_var, width=10).pack(pady=5)
+        tk.Button(self.root, text="Consultar", command=self.consultar).pack(pady=15)
+
+    def consultar(self) :
+
+        for peca in self.tree.get_children(): #borramos los árboles anteriores
+            self.tree.delete(peca)
+
+        for peca, quantitat in self.controller.consultar(self.codi_var.get()).items() : #insertamos los datos del dict
+            self.tree.insert("", "end", values=(peca.codi, peca.nom, quantitat))
+    def run(self) :
+        self.root.mainloop()
+# ==========================================    
 # MAIN
 # ==========================================
 
@@ -671,14 +703,16 @@ def main():
             view_produir = ViewProduir(controller_produir)
             view_produir.run()
         elif opcio == "4":
-            controller_disponibilitat = ControllerPecesDisponible(fabrica)
-            view_disponibilitat = ViewPecesDisponible(controller_disponibilitat)
+            controller_disponibilitat = ControllerPecesDisponible_C(fabrica)
+            view_disponibilitat = ViewPecesDisponible_C(controller_disponibilitat)
             view_disponibilitat.run()
         elif opcio == "5":
-            print("\nSortint...")
-            break
-        else:
+            controller_disponibilitat_D = ControllerPecesDisponible_D(fabrica)
+            view_disponibilitat_D = ViewPecesDisponible_D(controller_disponibilitat_D)
+            view_disponibilitat_D.run()
+        elif opcio == "6":
             print("Opció no vàlida.")
+            break
 
     print("\nLlista de models existents a la fàbrica al tancar:")
     for m in fabrica._models:
