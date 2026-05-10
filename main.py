@@ -133,7 +133,8 @@ class RegistreProduccio:
     def nVehiclesProduits(self, model: ModelVehicle, dataInici: datetime, dataFi: datetime) -> int:
         comptador = 0
         for vehicle in self._vehicles_registrats:
-            if vehicle._model == model and (dataInici <= vehicle._dataProduccio <= dataFi):
+            data_vehicle = vehicle._dataProduccio.date()
+            if vehicle._model == model and (dataInici <= data_vehicle <= dataFi):
                 comptador += 1
         return comptador
 
@@ -166,9 +167,9 @@ class ModelCotxe(ModelVehicle) :
         if self._electric :
             return "0 Emisions"
         elif self.tipusCombustible.lower() == "gasolina":
-            return "C"
-        elif self.tipusCombustible.lower() == "diesel" :
             return "B"
+        elif self.tipusCombustible.lower() == "diesel" :
+            return "C"
         else :
             return "Sense etiqueta"
     
@@ -213,7 +214,7 @@ class ModelMoto(ModelVehicle):
         if self._electric :
             return "0 Emisions"
         else :
-            return "C"
+            return "B"
     
     @property 
     def tipusRodes(self):
@@ -664,6 +665,8 @@ class ControllerProduccio :
         return self.fabrica.es_possible_produir(model)
     def get_llista_models(self) :
         return [m._nomModel for m in self.fabrica._models]
+    def get_model(self, model_nom : str) :
+        return next((m for m in self.fabrica._models if m._nomModel == model_nom), None)
 class ViewProduccio :
     def __init__(self,controller:ControllerProduccio) :
         self.controller = controller
@@ -679,7 +682,8 @@ class ViewProduccio :
         self.eleccio.pack(pady=5)
         tk.Button(self.root,text="Consultar", command=self.consultar).pack(pady=15)
     def consultar(self) -> None:
-        model = next((m for m in self.fabrica._models if m._nomModel == model_nom), None)
+        model_nom = self.model_var.get()
+        model = self.controller.get_model(model_nom)
         if not self.controller.consultar(model) :
             messagebox.showinfo("Resultat de la comprovació", f"No es pot produir un model del tipus {model} amb les peces disponibles")
         else :
