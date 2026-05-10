@@ -20,6 +20,18 @@ class Fabrica:
         self._comptador_series = 1
         self._index_linea_actual = 0
 
+    @property
+    def models(self):
+        return self._models
+
+    @property
+    def inventariPeces(self):
+        return self._inventariPeces
+
+    @property
+    def registreProduccio(self):
+        return self._registreProduccio
+
     def assignarInventari(self, inventari: InventariPeces):
         self._inventariPeces = inventari
 
@@ -101,6 +113,14 @@ class ModelVehicle(ABC) :
     @abstractmethod
     def etiquetaDeContaminacio(self):
         pass
+
+    @property
+    def nomModel(self):
+        return self._nomModel
+
+    @property
+    def electric(self):
+        return self._electric
 
     def afegirRequisitPeca(self, requisit: RequisitPeca):
         if requisit in self._requisits_peces :
@@ -283,6 +303,10 @@ class InventariPeces:
     def __init__(self, data_ultima_revisio):
         self._data_ultima_revisio = data_ultima_revisio
         self._estoc = {} # codi_peca -> dict(peca: Peca, quantitat: int)
+    
+    @property
+    def estoc(self):
+        return self._estoc
 
     def afegir_estoc(self, peca, quantitat):
         codi = peca.codi
@@ -331,7 +355,40 @@ class ControllerCreaModel:
             elif tipus_vehicle == "Moto":
                 nou_model = ModelMoto(nom, electric, cil, tipus_rodes, carnet)
                 self.fabrica.afegirModelMoto(nou_model)
-            else:
+    class ViewProduir:
+    def __init__(self, controller):
+        self.controller = controller
+        self.root = tk.Tk()
+        self.root.title("Produir Vehicle")
+        self.root.geometry("400x450")
+
+        self.model_var = tk.StringVar()
+        self.color_var = tk.StringVar()
+
+        self.crear_interficie()
+
+    def crear_interficie(self):
+        tk.Label(self.root, text="Selecciona un model: ").pack(pady=5)
+        self.combo_models = ttk.Combobox(self.root, textvariable=self.model_var, values=self.controller.get_llista_models(), state="readonly", width=35)
+        self.combo_models.pack()
+
+        tk.Label(self.root, text="Escull un color: ").pack(pady=5)
+        self.combo_colors = ttk.Combobox(self.root, textvariable=self.color_var, values=["Verd", "Vermell", "Groc", "Blau", "Blanc", "Negre", "Gris"], state="readonly", width=35)
+        self.combo_colors.pack()
+        
+        tk.Button(self.root, text="Crear", command=self.afegir).pack(pady=15)
+
+    def afegir(self):
+        try:
+            self.controller.produir_vehicle(self.model_var.get(), self.color_var.get())
+            messagebox.showinfo("Èxit","Hey! Ja s'ha creat el teu cotxe :)")
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+
+    def run(self):
+        self.root.mainloop()
+
+        else:
                 raise ValueError("Selecciona Cotxe o Moto.")
             return True
         except Exception as e:
@@ -819,7 +876,7 @@ def main():
 
     print("\nLlista de models existents a la fàbrica al tancar:")
     for m in fabrica._models:
-        print(f" - {m._nomModel} ({'Elèctric' if m._electric else 'Combustió'})")
+        print(f" - {m.nomModel} ({'Elèctric' if m.electric else 'Combustió'})")
 
 if __name__ == "__main__":
     main()
