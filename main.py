@@ -1,6 +1,5 @@
 from __future__ import annotations
 import logging
-import math
 from datetime import datetime 
 from abc import ABC, abstractmethod
 import tkinter as tk
@@ -550,7 +549,7 @@ class ViewProduir:
     def afegir(self):
         try:
             self.controller.produir_vehicle(self.model_var.get(), self.color_var.get())
-            messagebox.showinfo("Hey! Ja s'ha creat el teu cotxe :)")
+            messagebox.showinfo("Èxit","Hey! Ja s'ha creat el teu cotxe :)")
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
@@ -584,9 +583,9 @@ class ViewPecesDisponible_C:
         try:
             value = self.controller.consultar(self.codi_var.get())
             if value == -1:
-                messagebox.showinfo("NO EXISTEIX!")
+                messagebox.showinfo("Error","NO EXISTEIX!")
             else:
-                messagebox.showinfo("Existeix i n'hi ha: ", value)
+                messagebox.showinfo("Resultat",f"Existeix i n'hi ha: {value}")
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
@@ -631,6 +630,10 @@ class ControllerDates :
         self.fabrica = fabrica
     def consultar(self,model, data_in, data_fi) -> list:
         return self.fabrica._registreProduccio.nVehiclesProduits(model, data_in, data_fi)
+    def get_llista_models(self) :
+        return [m._nomModel for m in self.fabrica._models]
+    def get_model(self,model_nom:str) :
+        return next((m for m in self.fabrica._models if m._nomModel == model_nom),None)
 class ViewDates :
     def __init__(self, controller : ControllerDates) :
         self.controller = controller
@@ -642,7 +645,8 @@ class ViewDates :
         self.crear_interficie()
     def crear_interficie(self) :
         tk.Label(self.root, text="Introdueix model:").pack(pady=5)
-        tk.Entry(self.root, textvariable=self.modelo_var, width=10).pack(pady=5)
+        self.combo_models = ttk.Combobox(self.root, textvariable=self.modelo_var, values=self.controller.get_llista_models(), state="readonly", width=35)
+        self.combo_models.pack(pady=5)
         tk.Label(self.root, text="Introdueix data inici:").pack(pady=5)
         self.calendari_ini = DateEntry(self.root, width=10, date_pattern='dd/mm/yyyy')
         self.calendari_ini.pack(pady=5)
@@ -651,7 +655,11 @@ class ViewDates :
         self.calendari_fi.pack(pady=5)
         tk.Button(self.root,text="Consultar", command=self.consultar).pack(pady=15)
     def consultar(self) :
-        model = self.modelo_var.get()
+        model_nom = self.modelo_var.get()
+        model = self.controller.get_model(model_nom)
+        if model is None :
+            messagebox.showerror("Error", "Selecciona un model vàlid.")
+            return
         data_ini = self.calendari_ini.get_date()
         data_fi = self.calendari_fi.get_date()
         messagebox.showinfo("Èxit en la cerca", f"S'han produit {self.controller.consultar(model,data_ini,data_fi)} del model {model}")
@@ -684,6 +692,9 @@ class ViewProduccio :
     def consultar(self) -> None:
         model_nom = self.model_var.get()
         model = self.controller.get_model(model_nom)
+        if model is None: 
+            messagebox.showerror("Error", "Selecciona un model vàlid")
+            return
         if not self.controller.consultar(model) :
             messagebox.showinfo("Resultat de la comprovació", f"No es pot produir un model del tipus {model} amb les peces disponibles")
         else :
