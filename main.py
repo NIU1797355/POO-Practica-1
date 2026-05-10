@@ -42,7 +42,7 @@ class Fabrica:
             logging.error(f"Error en afegir model moto: {e}")
             return False
 
-    def produirVehicle(self, model: ModelVehicle, color: str) -> VehicleProduit:
+    def produirVehicle(self, model: ModelVehicle, color: str, numero_serie: str, data_produccio: datetime) -> VehicleProduit:
         if not self._lineesProduccio:
             raise Exception("No hi ha línies de producció assignades a la fàbrica.")
         if self._inventariPeces is None:
@@ -50,22 +50,19 @@ class Fabrica:
         try:
             self._inventariPeces.consumir_peces(model)
         except Exception as e:
-            print(f"Error de producció: Falten peces - {e}")
+            print(f"Error de producció: Filten peces - {e}")
             return None
-
         linea = self._lineesProduccio[self._index_linea_actual]
         self._index_linea_actual = (self._index_linea_actual + 1) % len(self._lineesProduccio)
         
         vehicle = linea.produirVehicle(model)
 
-        vehicle._numeroSerie = f"SN-{self._comptador_series:05d}"
-        self._comptador_series += 1
+        vehicle._numeroSerie = numero_serie
         vehicle._color = color
-        vehicle._dataProduccio = datetime.now()
+        vehicle._dataProduccio = data_produccio
 
         if self._registreProduccio is not None:
             self._registreProduccio.registrarVehicle(vehicle)
-
         return vehicle
 
     def afegirLineaProduccio(self, linea_produccio: LineaProduccioVehicle) -> bool:
@@ -515,23 +512,24 @@ class ControllerProduir:
         self.fabrica = fabrica
     def get_llista_models(self):
         return [m._nomModel for m in self.fabrica._models]
-    def produir_vehicle(self, model_nom: str, color: str) -> None:
+    def produir_vehicle(self, model_nom: str, color: str, num_serie: str, data_prod: datetime) -> None:
         model = next((m for m in self.fabrica._models if m._nomModel == model_nom), None)
         if not model:
-            raise ValueError("Obj no trobat")
+            raise ValueError("Model no trobat")
         if not self.fabrica.es_possible_produir(model):
-            raise Exception("No hi ha peçes suficients")
-        self.fabrica.produirVehicle(model, color.lower())
+            raise Exception("No hi ha peces suficients")
+        self.fabrica.produirVehicle(model, color.lower(), num_serie, data_prod)
 
 class ViewProduir:
     def __init__(self, controller):
         self.controller = controller
         self.root = tk.Tk()
         self.root.title("Produir Vehicle")
-        self.root.geometry("400x450")
+        self.root.geometry("400x550") 
 
         self.model_var = tk.StringVar()
         self.color_var = tk.StringVar()
+        self.num_serie_var = tk.StringVar()
 
         self.crear_interficie()
 
@@ -544,12 +542,25 @@ class ViewProduir:
         self.combo_colors = ttk.Combobox(self.root, textvariable=self.color_var, values=["Verd", "Vermell", "Groc", "Blau", "Blanc", "Negre", "Gris"], state="readonly", width=35)
         self.combo_colors.pack()
         
+        tk.Label(self.root, text="Número de sèrie:").pack(pady=5)
+        tk.Entry(self.root, textvariable=self.num_serie_var, width=37).pack()
+        
+        tk.Label(self.root, text="Data de producció:").pack(pady=5)
+        self.calendari_prod = DateEntry(self.root, width=34, date_pattern='dd/mm/yyyy')
+        self.calendari_prod.pack(pady=5)
+
         tk.Button(self.root, text="Crear", command=self.afegir).pack(pady=15)
 
     def afegir(self):
         try:
-            self.controller.produir_vehicle(self.model_var.get(), self.color_var.get())
-            messagebox.showinfo("Èxit","Hey! Ja s'ha creat el teu cotxe :)")
+            data_seleccionada = datetime.combine(self.calendari_prod.get_date(), datetime.min.time())
+            self.controller.produir_vehicle(
+                self.model_var.get(), 
+                self.color_var.get(), 
+                self.num_serie_var.get(), 
+                data_seleccionada
+            )
+            messagebox.showinfo("Èxit","Vehicle registrat correctament.")
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
@@ -662,7 +673,7 @@ class ViewDates :
             return
         data_ini = self.calendari_ini.get_date()
         data_fi = self.calendari_fi.get_date()
-        messagebox.showinfo("Èxit en la cerca", f"S'han produit {self.controller.consultar(model,data_ini,data_fi)} del model {model}")
+        messagebox.showinfo("Èxit en la cerca", f"S'han produit {self.controller.consultar(model,data_ini,data_fi)} del model {model_nom}")
     def run(self) :
         self.root.mainloop()
 
@@ -696,9 +707,9 @@ class ViewProduccio :
             messagebox.showerror("Error", "Selecciona un model vàlid")
             return
         if not self.controller.consultar(model) :
-            messagebox.showinfo("Resultat de la comprovació", f"No es pot produir un model del tipus {model} amb les peces disponibles")
+            messagebox.showinfo("Resultat de la comprovació", f"No es pot produir un model del tipus {model_nom} amb les peces disponibles")
         else :
-            messagebox.showinfo("Resultat de la comprovació",f"Si es pot produir el model {model} amb les peces disponibles")
+            messagebox.showinfo("Resultat de la comprovació",f"Si es pot produir el model {model_nom} amb les peces disponibles")
     def run(self) :
         self.root.mainloop()
         
@@ -766,10 +777,10 @@ def main():
         print("\n--- MENÚ PRINCIPAL ---")
         print("1 - Formulari per nous Models")
         print("2 - Formulari per afegir peces als models")
-        print("3 - Formulari per produir vehicle")
+        print("3 - Formulari per afegir vehicles produïts")
         print("4 - Comprovar inventari amb codi de peça")
-        print("5 - Comprovar peces d'un proveidor")
-        print("6 - Comprovar vehicles produïts d'un model")
+        print("5 - Comprovar peces d'un proveïdor")
+        print("6 - Consulta de cotxes produïts")
         print("7 - Consulta disponibilitat d'un model")
         print("8 - Sortir")
         opcio = input("Escull una opció (1, 2, 3, 4, 5, 6, 7 o 8): ")
