@@ -662,7 +662,8 @@ class ControllerProduccio :
         self.fabrica = fabrica
     def consultar(self,model) :
         return self.fabrica.es_possible_produir(model)
-
+    def get_llista_models(self) :
+        return [m._nomModel for m in self.fabrica._models]
 class ViewProduccio :
     def __init__(self,controller:ControllerProduccio) :
         self.controller = controller
@@ -670,7 +671,7 @@ class ViewProduccio :
         self.root.title("Es pot produir el teu model?")
         self.root.geometry("400x450")
 
-        self.model_var = tk.StringVar
+        self.model_var = tk.StringVar()
         self.crear_interficie()
     def crear_interficie(self) :
         tk.Label(self.root, text="Seleccioni model :").pack(pady=5)
@@ -678,11 +679,11 @@ class ViewProduccio :
         self.eleccio.pack(pady=5)
         tk.Button(self.root,text="Consultar", command=self.consultar).pack(pady=15)
     def consultar(self) -> None:
-        model = self.model_var.get()
-        if not self.consultar(model) :
-            messagebox.info("Resultat de la comprovació", f"No es pot produir un model del tipus {model} amb les peces disponibles")
+        model = next((m for m in self.fabrica._models if m._nomModel == model_nom), None)
+        if not self.controller.consultar(model) :
+            messagebox.showinfo("Resultat de la comprovació", f"No es pot produir un model del tipus {model} amb les peces disponibles")
         else :
-            messagebox.info("Resultat de la comprovació",f"Si es pot produir el model {model} amb les peces disponibles")
+            messagebox.showinfo("Resultat de la comprovació",f"Si es pot produir el model {model} amb les peces disponibles")
     def run(self) :
         self.root.mainloop()
         
