@@ -5,6 +5,7 @@ from datetime import datetime
 from abc import ABC, abstractmethod
 import tkinter as tk
 from tkinter import messagebox, ttk
+from tkcalendar import DateEntry
 
 # === Fabrica ==========
 
@@ -623,6 +624,39 @@ class ViewPecesDisponible_D :
             self.tree.insert("", "end", values=(peca.codi, peca.nom, quantitat))
     def run(self) :
         self.root.mainloop()
+class ControllerDates :
+    def __init__(self,fabrica) :
+        self.fabrica = fabrica
+    def consultar(self,model, data_in, data_fi) :
+        return self.fabrica._registreProduccio.nVehiclesProduits(model, data_in, data_fi)
+class ViewDates :
+    def __init__(self, controller : ControllerDates) :
+        self.controller = controller
+        self.root = tk.Tk()
+        self.root.title("Vehicles produits :")
+        self.root.geometry("400x450")
+        
+        self.modelo_var = tk.StringVar()
+        self.crear_interficie()
+    def crear_interficie(self) :
+        tk.Label(self.root, text="Introdueix model:").pack(pady=5)
+        tk.Entry(self.root, textvariable=self.modelo_var, width=10).pack(pady=5)
+        tk.Label(self.root, text="Introdueix data inici:").pack(pady=5)
+        self.calendari_ini = DateEntry(self.root, width=10, date_pattern='dd/mm/yyyy')
+        self.calendari_ini.pack(pady=5)
+        tk.Label(self.root, text="Introdueix data fi:").pack(pady=5)
+        self.calendari_fi = DateEntry(self.root, width=10, date_pattern='dd/mm/yyyy')
+        self.calendari_fi.pack(pady=5)
+        tk.Button(self.root,text="Consultar", command=self.consultar).pack(pady=15)
+    def consultar(self) :
+        model = self.modelo_var.get()
+        data_ini = self.calendari_ini.get_date()
+        data_fi = self.calendari_fi.get_date()
+        messagebox.showinfo("Èxit en la cerca", f"S'han produit {self.controller.consultar(model,data_ini,data_fi)} del model {model}")
+    def run(self) :
+        self.root.mainloop()
+
+
 # ==========================================    
 # MAIN
 # ==========================================
@@ -711,7 +745,10 @@ def main():
             view_disponibilitat_D = ViewPecesDisponible_D(controller_disponibilitat_D)
             view_disponibilitat_D.run()
         elif opcio == "6":
-            print("Opció no vàlida.")
+            controller_dates = ControllerDates(fabrica) 
+            view_dates = ViewDates(controller_dates)
+            view_dates.run()
+        elif opcio == "7" :
             break
 
     print("\nLlista de models existents a la fàbrica al tancar:")
