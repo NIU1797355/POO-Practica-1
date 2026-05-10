@@ -579,7 +579,7 @@ class ViewPecesDisponible_C:
 
         tk.Button(self.root, text="Consultar", command=self.consultar).pack(pady=15)
 
-    def consultar(self):
+    def consultar(self) -> None:
         try:
             value = self.controller.consultar(self.codi_var.get())
             if value == -1:
@@ -615,19 +615,20 @@ class ViewPecesDisponible_D :
         tk.Entry(self.root, textvariable=self.codi_var, width=10).pack(pady=5)
         tk.Button(self.root, text="Consultar", command=self.consultar).pack(pady=15)
 
-    def consultar(self) :
+    def consultar(self) -> None:
 
         for peca in self.tree.get_children(): #borramos los árboles anteriores
             self.tree.delete(peca)
 
         for peca, quantitat in self.controller.consultar(self.codi_var.get()).items() : #insertamos los datos del dict
             self.tree.insert("", "end", values=(peca.codi, peca.nom, quantitat))
+
     def run(self) :
         self.root.mainloop()
 class ControllerDates :
     def __init__(self,fabrica) :
         self.fabrica = fabrica
-    def consultar(self,model, data_in, data_fi) :
+    def consultar(self,model, data_in, data_fi) -> list:
         return self.fabrica._registreProduccio.nVehiclesProduits(model, data_in, data_fi)
 class ViewDates :
     def __init__(self, controller : ControllerDates) :
@@ -656,6 +657,35 @@ class ViewDates :
     def run(self) :
         self.root.mainloop()
 
+class ControllerProduccio :
+    def __init__(self, fabrica) :
+        self.fabrica = fabrica
+    def consultar(self,model) :
+        return self.fabrica.es_possible_produir(model)
+
+class ViewProduccio :
+    def __init__(self,controller:ControllerProduccio) :
+        self.controller = controller
+        self.root = tk.Tk()
+        self.root.title("Es pot produir el teu model?")
+        self.root.geometry("400x450")
+
+        self.model_var = tk.StringVar
+        self.crear_interficie()
+    def crear_interficie(self) :
+        tk.Label(self.root, text="Seleccioni model :").pack(pady=5)
+        self.eleccio =ttk.Combobox(self.root, textvariable=self.model_var, values=self.controller.get_llista_models())
+        self.eleccio.pack(pady=5)
+        tk.Button(self.root,text="Consultar", command=self.consultar).pack(pady=15)
+    def consultar(self) -> None:
+        model = self.model_var.get()
+        if not self.consultar(model) :
+            messagebox.info("Resultat de la comprovació", f"No es pot produir un model del tipus {model} amb les peces disponibles")
+        else :
+            messagebox.info("Resultat de la comprovació",f"Si es pot produir el model {model} amb les peces disponibles")
+    def run(self) :
+        self.root.mainloop()
+        
 
 # ==========================================    
 # MAIN
@@ -721,8 +751,12 @@ def main():
         print("1 - Formulari per nous Models")
         print("2 - Formulari per afegir peces als models")
         print("3 - Formulari per produir vehicle")
-        print("4 - Sortir")
-        opcio = input("Escull una opció (1, 2, 3 o 4): ")
+        print("4 - Comprovar inventari amb codi de peça")
+        print("5 - Comprovar peces d'un proveidor")
+        print("6 - Comprovar vehicles produïts d'un model")
+        print("7 - Consulta disponibilitat d'un model")
+        print("8 - Sortir")
+        opcio = input("Escull una opció (1, 2, 3, 4, 5, 6, 7 o 8): ")
 
         if opcio == "1":
             controller_model = ControllerCreaModel(fabrica)
@@ -749,6 +783,11 @@ def main():
             view_dates = ViewDates(controller_dates)
             view_dates.run()
         elif opcio == "7" :
+            controller_produccio = ControllerProduccio(fabrica)
+            view_produccio = ViewProduccio(controller_produccio)
+            view_produccio.run()
+        elif opcio == "8" :
+            print("Sortint...")
             break
 
     print("\nLlista de models existents a la fàbrica al tancar:")
