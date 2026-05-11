@@ -57,12 +57,12 @@ class Fabrica:
     def produirVehicle(self, model: ModelVehicle, color: str, numero_serie: str, data_produccio: datetime) -> VehicleProduit:
         if not self._lineesProduccio:
             raise Exception("No hi ha línies de producció assignades a la fàbrica.")
-        if self._inventariPeces is None:
+        if self.inventariPeces is None:
             raise Exception("No hi ha inventari assignat.")
         try:
-            self._inventariPeces.consumir_peces(model)
+            self.inventariPeces.consumir_peces(model)
         except Exception as e:
-            print(f"Error de producció: Filten peces - {e}")
+            print(f"Error de producció: Falten peces - {e}")
             return None
         linea = self._lineesProduccio[self._index_linea_actual]
         self._index_linea_actual = (self._index_linea_actual + 1) % len(self._lineesProduccio)
@@ -85,12 +85,12 @@ class Fabrica:
             raise Exception("Error: linea de produccio ja està a la llista.")
 
     def es_possible_produir(self, model: ModelVehicle) -> bool:
-        if self._inventariPeces is None:
+        if self.inventariPeces is None:
             return False
         for req in model.requisits_peces:
             codi = req.peca.codi
             quantitat_necessaria = req.quantitat
-            if codi not in self._inventariPeces._estoc or self._inventariPeces._estoc[codi]['quantitat'] < quantitat_necessaria:
+            if codi not in self.inventariPeces.estoc or self.inventariPeces.estoc[codi]['quantitat'] < quantitat_necessaria:
                 return False
         return True
 
@@ -318,7 +318,7 @@ class InventariPeces:
     def numExistenciesPeca(self, codiPeca):
         if codiPeca in self._estoc:
             return self._estoc[codiPeca]['quantitat']
-        return -1 #NO EXISTE IMBECIL
+        return -1 #NO EXISTE IMBECIL HECTORRRRRRR
 
     def pecesProveidor(self, cif_proveidor):
         peces_prov = {}
@@ -355,44 +355,8 @@ class ControllerCreaModel:
             elif tipus_vehicle == "Moto":
                 nou_model = ModelMoto(nom, electric, cil, tipus_rodes, carnet)
                 self.fabrica.afegirModelMoto(nou_model)
-    class ViewProduir:
-    def __init__(self, controller):
-        self.controller = controller
-        self.root = tk.Tk()
-        self.root.title("Produir Vehicle")
-        self.root.geometry("400x450")
-
-        self.model_var = tk.StringVar()
-        self.color_var = tk.StringVar()
-
-        self.crear_interficie()
-
-    def crear_interficie(self):
-        tk.Label(self.root, text="Selecciona un model: ").pack(pady=5)
-        self.combo_models = ttk.Combobox(self.root, textvariable=self.model_var, values=self.controller.get_llista_models(), state="readonly", width=35)
-        self.combo_models.pack()
-
-        tk.Label(self.root, text="Escull un color: ").pack(pady=5)
-        self.combo_colors = ttk.Combobox(self.root, textvariable=self.color_var, values=["Verd", "Vermell", "Groc", "Blau", "Blanc", "Negre", "Gris"], state="readonly", width=35)
-        self.combo_colors.pack()
-        
-        tk.Button(self.root, text="Crear", command=self.afegir).pack(pady=15)
-
-    def afegir(self):
-        try:
-            self.controller.produir_vehicle(self.model_var.get(), self.color_var.get())
-            messagebox.showinfo("Èxit","Hey! Ja s'ha creat el teu cotxe :)")
         except Exception as e:
-            messagebox.showerror("Error", str(e))
-
-    def run(self):
-        self.root.mainloop()
-
-        else:
-                raise ValueError("Selecciona Cotxe o Moto.")
-            return True
-        except Exception as e:
-            raise e
+            raise Exception("Error al afegir")
 
 class ViewCreaModel:
     def __init__(self, controller):
@@ -485,19 +449,19 @@ class ControllerAfegeixPeces:
         self.inventari = inventari
 
     def get_llista_models(self):
-        return [m._nomModel for m in self.fabrica._models]
+        return [m.nomModel for m in self.fabrica.models]
 
     def get_llista_peces(self):
-        return [f"{dades['peca'].codi} - {dades['peca'].nom}" for dades in self.inventari._estoc.values()]
+        return [f"{dades['peca'].codi} - {dades['peca'].nom}" for dades in self.inventari.estoc.values()]
 
     def afegir_peca_a_model(self, nom_model, seleccio_peca, quantitat, opcional, posicio):
         try:
-            model_obj = next((m for m in self.fabrica._models if m._nomModel == nom_model), None)
+            model_obj = next((m for m in self.fabrica.models if m.nomModel == nom_model), None)
             if not model_obj:
                 raise ValueError("Model no trobat.")
 
             codi_peca = seleccio_peca.split(" - ")[0]
-            peca_obj = self.inventari._estoc[codi_peca]['peca']
+            peca_obj = self.inventari.estoc[codi_peca]['peca']
 
             quantitat_int = int(quantitat)
             posicio_int = int(posicio) if posicio else 0
@@ -568,9 +532,9 @@ class ControllerProduir:
     def __init__(self, fabrica: Fabrica):
         self.fabrica = fabrica
     def get_llista_models(self):
-        return [m._nomModel for m in self.fabrica._models]
+        return [m.nomModel for m in self.fabrica.models]
     def produir_vehicle(self, model_nom: str, color: str, num_serie: str, data_prod: datetime) -> None:
-        model = next((m for m in self.fabrica._models if m._nomModel == model_nom), None)
+        model = next((m for m in self.fabrica.models if m.nomModel == model_nom), None)
         if not model:
             raise ValueError("Model no trobat")
         if not self.fabrica.es_possible_produir(model):
@@ -628,7 +592,7 @@ class ControllerPecesDisponible_C:
     def __init__(self, fabrica: Fabrica):
         self.fabrica = fabrica
     def consultar(self, codi: str) -> int:
-        return self.fabrica._inventariPeces.numExistenciesPeca(codi)
+        return self.fabrica.inventariPeces.numExistenciesPeca(codi)
 
 class ViewPecesDisponible_C:
     def __init__(self, controller: ControllerPecesDisponible_C):
@@ -663,7 +627,7 @@ class ControllerPecesDisponible_D :
     def __init__(self,fabrica) :
         self.fabrica = fabrica
     def consultar(self, codi:str) -> dict:
-        return self.fabrica._inventariPeces.pecesProveidor(codi)
+        return self.fabrica.inventariPeces.pecesProveidor(codi)
 class ViewPecesDisponible_D :
     def __init__(self, controller:ControllerPecesDisponible_D) :
         self.controller = controller
@@ -697,11 +661,11 @@ class ControllerDates :
     def __init__(self,fabrica) :
         self.fabrica = fabrica
     def consultar(self,model, data_in, data_fi) -> list:
-        return self.fabrica._registreProduccio.nVehiclesProduits(model, data_in, data_fi)
+        return self.fabrica.registreProduccio.nVehiclesProduits(model, data_in, data_fi)
     def get_llista_models(self) :
-        return [m._nomModel for m in self.fabrica._models]
+        return [m.nomModel for m in self.fabrica.models]
     def get_model(self,model_nom:str) :
-        return next((m for m in self.fabrica._models if m._nomModel == model_nom),None)
+        return next((m for m in self.fabrica.models if m.nomModel == model_nom),None)
 class ViewDates :
     def __init__(self, controller : ControllerDates) :
         self.controller = controller
@@ -740,9 +704,9 @@ class ControllerProduccio :
     def consultar(self,model) :
         return self.fabrica.es_possible_produir(model)
     def get_llista_models(self) :
-        return [m._nomModel for m in self.fabrica._models]
+        return [m.nomModel for m in self.fabrica.models]
     def get_model(self, model_nom : str) :
-        return next((m for m in self.fabrica._models if m._nomModel == model_nom), None)
+        return next((m for m in self.fabrica.models if m.nomModel == model_nom), None)
 class ViewProduccio :
     def __init__(self,controller:ControllerProduccio) :
         self.controller = controller
@@ -875,7 +839,7 @@ def main():
             break
 
     print("\nLlista de models existents a la fàbrica al tancar:")
-    for m in fabrica._models:
+    for m in fabrica.models:
         print(f" - {m.nomModel} ({'Elèctric' if m.electric else 'Combustió'})")
 
 if __name__ == "__main__":
